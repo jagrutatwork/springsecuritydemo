@@ -21,6 +21,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
 @Configuration
@@ -32,6 +33,8 @@ public class SecurityConfig {
 	DataSource dataSource;
 	@Autowired
 	UserDetailsService userDetailsService;
+	@Autowired
+	private JWTFilter jwtFilter;
 	
 	@Bean
 	SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -40,13 +43,12 @@ public class SecurityConfig {
 		.requestMatchers("register","login")
 		.permitAll()
 		.anyRequest().authenticated());
-		http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-		//http.formLogin(withDefaults());
-		http.httpBasic(withDefaults());
-//		http.headers(headers ->
-//				headers.frameOptions(frameOptions -> frameOptions.sameOrigin())); 
-		http.csrf(csrf -> csrf.disable());
-		return http.build();
+		return http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+		.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+		.oauth2Login(withDefaults())
+		.httpBasic(withDefaults())
+		.csrf(csrf -> csrf.disable())
+		.build();
 	}
 	
 	
